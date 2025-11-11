@@ -1,245 +1,172 @@
 package com.example.widgetapp;
 
-import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONObject;
+
+import java.text.DateFormat;
+import java.util.Date;
+
 public class MainActivity extends AppCompatActivity {
-    private static final String LOG_TAG = "myLogs";
-    private TextView widgetStatusText;
-    private Button updateWidgetButton;
-    private Button addWidgetButton;
-    private Button openSettingsButton;
-    private Button showInstructionsButton;
+    private static final String LOG_TAG = "WeatherApp";
+
+    private TextView weatherText;
+    private TextView weatherDetails;
+    private TextView cityInfo;
+    private Button refreshButton;
+    private Spinner citySpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Log.d(LOG_TAG, "Запуск Яндекс.Погода приложения");
         initializeViews();
-        setupClickListeners();
-        checkWidgetStatus();
+        setupCitySpinner();
+        setupRefreshButton();
 
-        Log.d(LOG_TAG, "MainActivity created");
-    }
-     private void initializeViews() {
-        widgetStatusText = findViewById(R.id.widget_status_text);
-        updateWidgetButton = findViewById(R.id.update_widget_button);
-        addWidgetButton = findViewById(R.id.add_widget_button);
-//        openSettingsButton = findViewById(R.id.open_settings_button);
-//        showInstructionsButton = findViewById(R.id.show_instructions_button);
+        updateWeatherData("Orenburg");
     }
 
-    private void setupClickListeners() {
-        updateWidgetButton.setOnClickListener(new View.OnClickListener() {
+    private void initializeViews() {
+        weatherText = findViewById(R.id.weather);
+        weatherDetails = findViewById(R.id.weather_details);
+        cityInfo = findViewById(R.id.city_info);
+        refreshButton = findViewById(R.id.refresh_button);
+        citySpinner = findViewById(R.id.city_spinner);
+    }
+
+    private void setupCitySpinner() {
+        String[] cities = ConnectFetch.getSupportedCities();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                cities
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        citySpinner.setAdapter(adapter);
+
+        Log.d(LOG_TAG, "Список городов загружен: " + cities.length + " городов");
+    }
+
+    private void setupRefreshButton() {
+        refreshButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateAllWidgets();
+                String selectedCity = citySpinner.getSelectedItem().toString();
+                updateWeatherData(selectedCity);
+                Toast.makeText(MainActivity.this,
+                        "Обновляем погоду для " + selectedCity,
+                        Toast.LENGTH_SHORT).show();
             }
         });
-        addWidgetButton.setOnClickListener(new View.OnClickListener() {
+    }
+
+    private void updateWeatherData(final String city) {
+        runOnUiThread(new Runnable() {
             @Override
-            public void onClick(View v) {
-                addWidgetToHomeScreen();
+            public void run() {
+                weatherText.setText(" Загрузка...");
+                weatherDetails.setText("Подключаемся к Яндекс.Погоде");
+                cityInfo.setText("Город: " + city);
             }
         });
-        openSettingsButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openAppSettings();
-            }
-        });
-        showInstructionsButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showDetailedInstructions();
-            }
-        });
-    }
-    private void addWidgetToHomeScreen() {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // Для Android 8.0 и выше
-                Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_BIND);
-                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER,
-                        new ComponentName(this, AppWidget.class));
-                startActivity(intent);
-            } else {
-                Intent intent = new Intent();
-                intent.setAction("android.appwidget.action.APPWIDGET_PICK");
-                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_OPTIONS, createWidgetOptions());
-                startActivity(intent);
-            }
 
-            Toast.makeText(this, "Открывается экран выбора виджетов...", Toast.LENGTH_LONG).show();
+        new Thread() {
+            public void run() {
+                Log.i(LOG_TAG, "=== ЗАПРОС ПОГОДЫ ===");
+                Log.i(LOG_TAG, "Город: " + city);
+
+                final JSONObject json = ConnectFetch.getJSON(city);
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        if (json == null) {
+                            showError();
+                        } else {
+                            renderWeather(json);
+                        }
+                    }
+                });
+            }
+        }.start();
+    }
+
+    private void renderWeather(JSONObject json) {
+        try {
+            Log.d(LOG_TAG, "Начинаем обработку JSON ответа");
+
+            // Основные данные
+            JSONObject fact = json.getJSONObject("fact");
+            String cityName = json.getString("requested_city");
+
+            // Получаем числовые значения
+            int temp = fact.getInt("temp");
+            int feelsLike = fact.getInt("feels_like");
+            int humidity = fact.getInt("humidity");
+            int pressure = fact.getInt("pressure_mm");
+            double windSpeed = fact.getDouble("wind_speed");
+
+            // Получаем условие как СТРОКУ
+            String conditionString = fact.getString("condition");
+            String condition = ConnectFetch.getConditionText(conditionString);
+
+            // Время - используем поле "now" вместо "now_ts"
+            long timestamp = json.getLong("now") * 1000; // Исправлено здесь
+            DateFormat df = DateFormat.getDateTimeInstance();
+            String updateTime = df.format(new Date(timestamp));
+
+            // Получаем информацию о часовом поясе
+            JSONObject info = json.getJSONObject("info");
+            JSONObject tzinfo = info.getJSONObject("tzinfo");
+            String timezone = tzinfo.getString("name");
+
+            // Обновляем интерфейс
+            String weatherDisplay = String.format("%s\n🌡 %d°C", condition, temp);
+            weatherText.setText(weatherDisplay);
+
+            String detailsText = String.format(
+                    " Ощущается как: %d°C\n" +
+                            " Влажность: %d%%\n" +
+                            " Давление: %d мм\n" +
+                            " Ветер: %.1f м/с",
+                    feelsLike, humidity, pressure, windSpeed
+            );
+            weatherDetails.setText(detailsText);
+
+            String cityText = String.format(" %s\n %s\n %s", cityName, updateTime, timezone);
+            cityInfo.setText(cityText);
+
+            Log.i(LOG_TAG, "Погода отображена: " + cityName + " " + temp + "°C, условие: " + conditionString);
 
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error opening widget picker: " + e.getMessage());
-            showDetailedInstructionsWithFallback();
-        }
-    }
-    private void showDetailedInstructionsWithFallback() {
-        String instructions =
-                "📱 Как добавить виджет:\n\n" +
-                        "1. Нажмите кнопку HOME чтобы выйти на главный экран\n" +
-                        "2. Долгое нажатие (2-3 секунды) на пустом месте\n" +
-                        "3. Выберите 'Виджеты' или 'Widgets'\n" +
-                        "4. Найдите 'Мой Виджет'\n" +
-                        "5. Перетащите его на экран\n\n" +
-                        "Совет: Ищите в списке виджетов надпись '" + getString(R.string.widget_name) + "'";
+            Log.e(LOG_TAG, "Ошибка отображения погоды", e);
 
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("Добавление виджета")
-                .setMessage(instructions)
-                .setPositiveButton("Понятно", null)
-                .setNeutralButton("Открыть домашний экран", (dialog, which) -> {
-                    // Пытаемся открыть домашний экран
-                    Intent homeIntent = new Intent(Intent.ACTION_MAIN);
-                    homeIntent.addCategory(Intent.CATEGORY_HOME);
-                    homeIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(homeIntent);
-                })
-                .show();
-    }
-    private Bundle createWidgetOptions() {
-        Bundle options = new Bundle();
-        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110);
-        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 40);
-        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 250);
-        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 100);
-        return options;
-    }
-    private void checkWidgetStatus() {
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-        ComponentName widgetComponent = new ComponentName(this, AppWidget.class);
-        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(widgetComponent);
-
-        if (appWidgetIds.length > 0) {
-            String status = " Виджеты активны: " + appWidgetIds.length + " шт.\n";
-            status += " ID: ";
-            for (int i = 0; i < appWidgetIds.length; i++) {
-                status += appWidgetIds[i];
-                if (i < appWidgetIds.length - 1) {
-                    status += ", ";
-                }
+            // Детальный лог ошибки
+            try {
+                Log.e(LOG_TAG, "JSON ключи: " + json.toString().substring(0, 200) + "...");
+            } catch (Exception logEx) {
+                Log.e(LOG_TAG, "Не удалось записать JSON для отладки");
             }
-            widgetStatusText.setText(status);
-            widgetStatusText.setBackgroundColor(getColor(android.R.color.holo_green_light));
-        } else {
-            widgetStatusText.setText("Виджеты не активны\nДобавьте виджет на домашний экран");
-            widgetStatusText.setBackgroundColor(getColor(android.R.color.holo_red_light));
+
+            showError();
         }
     }
 
-    private void updateAllWidgets() {
-        try {
-            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-            ComponentName widgetComponent = new ComponentName(this, AppWidget.class);
-            int[] appWidgetIds = appWidgetManager.getAppWidgetIds(widgetComponent);
-
-            if (appWidgetIds.length > 0) {
-                Intent updateIntent = new Intent(this, AppWidget.class);
-                updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-                updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds);
-                sendBroadcast(updateIntent);
-
-                Toast.makeText(this, "🔄 Виджеты обновлены! Количество: " + appWidgetIds.length, Toast.LENGTH_SHORT).show();
-                Log.d(LOG_TAG, "Manual update triggered for " + appWidgetIds.length + " widgets");
-
-                checkWidgetStatus();
-            } else {
-                Toast.makeText(this, "❌ Нет активных виджетов для обновления", Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Error updating widgets: " + e.getMessage());
-            Toast.makeText(this, "⚠️ Ошибка обновления виджетов", Toast.LENGTH_SHORT).show();
-        }
-    }
-    private void showDetailedInstructions() {
-        String instructions =
-                "📋 Подробная инструкция по добавлению виджета:\n\n" +
-
-                        " Для большинства лаунчеров:\n" +
-                        "• Долгое нажатие на домашнем экране\n" +
-                        "• Выберите 'Виджеты'\n" +
-                        "• Найдите '" + getString(R.string.widget_name) + "'\n" +
-                        "• Перетащите на экран\n\n" +
-
-                        " Для некоторых лаунчеров:\n" +
-                        "• Откройте меню приложений\n" +
-                        "• Найдите вкладку 'Виджеты'\n" +
-                        "• Перетащите '" + getString(R.string.widget_name) + "' на экран\n\n" +
-
-                        " Если не нашли:\n" +
-                        "• Убедитесь что приложение установлено\n" +
-                        "• Перезагрузите устройство\n" +
-                        "• Проверьте настройки лаунчера";
-
-        new android.app.AlertDialog.Builder(this)
-                .setTitle(" Инструкция по добавлению виджета")
-                .setMessage(instructions)
-                .setPositiveButton(" Понятно", null)
-                .setNeutralButton(" Открыть домашний экран", (dialog, which) -> {
-                    openHomeScreen();
-                })
-                .show();
-    }
-    private void openHomeScreen() {
-        try {
-            Intent homeIntent = new Intent(Intent.ACTION_MAIN);
-            homeIntent.addCategory(Intent.CATEGORY_HOME);
-            homeIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(homeIntent);
-
-            Toast.makeText(this, "Перейдите к домашнему экрану и добавьте виджет", Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Не удалось открыть домашний экран", Toast.LENGTH_SHORT).show();
-        }
-    }
-    private void openAppSettings() {
-        try {
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            intent.setData(Uri.parse("package:" + getPackageName()));
-            startActivity(intent);
-        } catch (Exception e) {
-            Toast.makeText(this, "Не удалось открыть настройки", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        checkWidgetStatus();
-        Log.d(LOG_TAG, "MainActivity resumed");
-    }
-    public void onLogWidgetInfo(View view) {
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-        ComponentName widgetComponent = new ComponentName(this, AppWidget.class);
-        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(widgetComponent);
-
-        String logInfo = " Widget Information:\n";
-        logInfo += "Total widgets: " + appWidgetIds.length + "\n";
-        for (int id : appWidgetIds) {
-            logInfo += "Widget ID: " + id + "\n";
-        }
-
-        Log.d(LOG_TAG, logInfo);
-        Toast.makeText(this, "📝 Информация записана в логи", Toast.LENGTH_SHORT).show();
-
-        // Показываем также в Toast для удобства
-        if (appWidgetIds.length > 0) {
-            Toast.makeText(this, "Найдено виджетов: " + appWidgetIds.length, Toast.LENGTH_SHORT).show();
-        }
+    private void showError() {
+        weatherText.setText(" Ошибка");
+        weatherDetails.setText("Проверьте:\n• Интернет соединение\n• API ключ\n• Город");
+        cityInfo.setText("Попробуйте другой город");
+        Toast.makeText(this, "Ошибка загрузки погоды", Toast.LENGTH_LONG).show();
     }
 }

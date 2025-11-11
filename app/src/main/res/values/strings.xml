@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">WidgetApp</string>
-    <string name="widget_name">Мой Виджет</string>
-    <string name="widget_text">Добрый бобрито</string>
+    <string name="app_name">Yandex Weather</string>
+    <string name="widget_name">Погода Виджет</string>
+    <string name="widget_text">Обновление погоды...</string>
+    <string name="yandex_weather_api_key">448f6876-3262-4637-bedd-f415d41c5500</string>
 </resources>

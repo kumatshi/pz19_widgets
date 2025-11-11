@@ -1,120 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="#F5F5F5">
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="#E3F2FD"
+    android:gravity="center"
+    tools:context=".MainActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center">
+        android:text=" Яндекс Погода"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#1976D2"
+        android:layout_marginBottom="30dp" />
 
-        <!-- Заголовок -->
 
-        <!-- Статус виджетов -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:text="Управление Виджетом"
-            android:textColor="#2196F3"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Выберите город:"
+        android:textSize="16sp"
+        android:textColor="#424242"
+        android:layout_marginBottom="8dp" />
 
-        <TextView
-            android:id="@+id/widget_status_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:background="#FFFFFF"
-            android:text="Проверка статуса..."
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="24dp"
-            android:elevation="4dp" />
+    <Spinner
+        android:id="@+id/city_spinner"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:background="@drawable/spinner_background"
+        android:layout_marginBottom="20dp" />
 
-        <!-- Кнопка добавления виджета - ОСНОВНАЯ -->
-        <Button
-            android:id="@+id/add_widget_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Добавить виджет на экран"
-            android:textSize="18sp"
-            android:backgroundTint="#2196F3"
-            android:textColor="#FFFFFF"
-            android:layout_marginBottom="12dp"
-            android:padding="16dp"
-            android:elevation="8dp" />
 
-        <!-- Кнопка обновления виджетов -->
+    <TextView
+        android:id="@+id/weather"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Загрузка..."
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#1976D2"
+        android:gravity="center"
+        android:layout_marginBottom="20dp" />
 
-        <!-- Кнопка информации о виджетах
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Информация в логи"
-            android:textSize="16sp"
-            android:backgroundTint="#FF9800"
-            android:textColor="#FFFFFF"
-            android:layout_marginBottom="12dp"
-            android:onClick="onLogWidgetInfo"
-            android:drawablePadding="8dp" />-->
 
-        <!-- Кнопка показа инструкции
-        <Button
-            android:id="@+id/show_instructions_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Подробная инструкция"
-            android:textSize="16sp"
-            android:backgroundTint="#9C27B0"
-            android:textColor="#FFFFFF"
-            android:layout_marginBottom="12dp" />-->
+    <TextView
+        android:id="@+id/weather_details"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="16sp"
+        android:textColor="#424242"
+        android:gravity="center"
+        android:layout_marginBottom="25dp" />
 
-        <!-- Кнопка настроек приложения
-        <Button
-            android:id="@+id/open_settings_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Настройки приложения"
-            android:textSize="16sp"
-            android:backgroundTint="#607D8B"
-            android:textColor="#FFFFFF"
-            android:layout_marginBottom="24dp" />-->
 
-        <!-- Быстрая инструкция -->
-        <Button
-            android:id="@+id/update_widget_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:backgroundTint="#4CAF50"
-            android:drawablePadding="8dp"
-            android:text="Обновить все виджеты"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp" />
-        <!--
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Быстрый способ:"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+    <Button
+        android:id="@+id/refresh_button"
+        android:layout_width="180dp"
+        android:layout_height="50dp"
+        android:text=" Обновить"
+        android:textSize="16sp"
+        android:backgroundTint="#4CAF50"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="20dp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:background="#E3F2FD"
-            android:lineSpacingExtra="4dp"
-            android:padding="12dp"
-            android:text="1. Нажмите кнопку 'Добавить виджет' выше\n2. Следуйте инструкциям на экране\n3. Или используйте кнопку HOME + долгое нажатие"
-            android:textSize="14sp" />  -->
 
-    </LinearLayout>
+    <TextView
+        android:id="@+id/city_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="14sp"
+        android:textColor="#757575"
+        android:gravity="center" />
 
-</ScrollView>
+</LinearLayout>
