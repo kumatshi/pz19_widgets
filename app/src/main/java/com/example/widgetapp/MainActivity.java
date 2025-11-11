@@ -30,12 +30,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Log.d(LOG_TAG, "Запуск Яндекс.Погода приложения");
+        Log.d(LOG_TAG, "Инициализация Яндекс.Погода приложения с анонимными классами");
         initializeViews();
         setupCitySpinner();
         setupRefreshButton();
 
-        updateWeatherData("Orenburg");
+
+        loadWeatherData("Orenburg");
     }
 
     private void initializeViews() {
@@ -60,11 +61,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupRefreshButton() {
+
         refreshButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String selectedCity = citySpinner.getSelectedItem().toString();
-                updateWeatherData(selectedCity);
+                loadWeatherData(selectedCity);
                 Toast.makeText(MainActivity.this,
                         "Обновляем погоду для " + selectedCity,
                         Toast.LENGTH_SHORT).show();
@@ -72,66 +74,57 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void updateWeatherData(final String city) {
-        runOnUiThread(new Runnable() {
+    private void loadWeatherData(String city) {
+
+        weatherText.setText(" Загрузка...");
+        weatherDetails.setText("Подключаемся к Яндекс.Погоде");
+        cityInfo.setText("Город: " + city);
+
+
+        new ConnectFetch(this, city, new OnConnectionCompleteListener() {
             @Override
-            public void run() {
-                weatherText.setText(" Загрузка...");
-                weatherDetails.setText("Подключаемся к Яндекс.Погоде");
-                cityInfo.setText("Город: " + city);
+            public void onSuccess(JSONObject response) {
+                renderWeather(response);
+            }
+
+            @Override
+            public void onFail(String message) {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                showError(message);
             }
         });
-
-        new Thread() {
-            public void run() {
-                Log.i(LOG_TAG, "=== ЗАПРОС ПОГОДЫ ===");
-                Log.i(LOG_TAG, "Город: " + city);
-
-                final JSONObject json = ConnectFetch.getJSON(city);
-
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        if (json == null) {
-                            showError();
-                        } else {
-                            renderWeather(json);
-                        }
-                    }
-                });
-            }
-        }.start();
     }
 
     private void renderWeather(JSONObject json) {
         try {
-            Log.d(LOG_TAG, "Начинаем обработку JSON ответа");
+            Log.d(LOG_TAG, "Начинаем обработку JSON ответа от Яндекс.Погоды");
 
-            // Основные данные
+
             JSONObject fact = json.getJSONObject("fact");
             String cityName = json.getString("requested_city");
 
-            // Получаем числовые значения
+
             int temp = fact.getInt("temp");
             int feelsLike = fact.getInt("feels_like");
             int humidity = fact.getInt("humidity");
             int pressure = fact.getInt("pressure_mm");
             double windSpeed = fact.getDouble("wind_speed");
 
-            // Получаем условие как СТРОКУ
+
             String conditionString = fact.getString("condition");
             String condition = ConnectFetch.getConditionText(conditionString);
 
-            // Время - используем поле "now" вместо "now_ts"
-            long timestamp = json.getLong("now") * 1000; // Исправлено здесь
-            DateFormat df = DateFormat.getDateTimeInstance();
-            String updateTime = df.format(new Date(timestamp));
 
-            // Получаем информацию о часовом поясе
+            long timestamp = json.getLong("now") * 1000;
+            DateFormat df = DateFormat.getDateTimeInstance();
+            String updatedOn = df.format(new Date(timestamp));
+
+
             JSONObject info = json.getJSONObject("info");
             JSONObject tzinfo = info.getJSONObject("tzinfo");
             String timezone = tzinfo.getString("name");
 
-            // Обновляем интерфейс
+
             String weatherDisplay = String.format("%s\n🌡 %d°C", condition, temp);
             weatherText.setText(weatherDisplay);
 
@@ -144,29 +137,28 @@ public class MainActivity extends AppCompatActivity {
             );
             weatherDetails.setText(detailsText);
 
-            String cityText = String.format(" %s\n %s\n %s", cityName, updateTime, timezone);
+            String cityText = String.format(" %s\n🕐 %s\n⏰ %s", cityName, updatedOn, timezone);
             cityInfo.setText(cityText);
 
-            Log.i(LOG_TAG, "Погода отображена: " + cityName + " " + temp + "°C, условие: " + conditionString);
+            Log.i(LOG_TAG, "Погода от Яндекс.Погоды отображена: " + cityName + " " + temp + "°C, условие: " + conditionString);
 
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Ошибка отображения погоды", e);
+            Log.e(LOG_TAG, "Ошибка отображения данных Яндекс.Погоды", e);
 
-            // Детальный лог ошибки
+
             try {
-                Log.e(LOG_TAG, "JSON ключи: " + json.toString().substring(0, 200) + "...");
+                Log.e(LOG_TAG, "JSON ключи: " + json.toString().substring(0, Math.min(200, json.toString().length())) + "...");
             } catch (Exception logEx) {
                 Log.e(LOG_TAG, "Не удалось записать JSON для отладки");
             }
 
-            showError();
+            showError("Ошибка обработки данных Яндекс.Погоды");
         }
     }
 
-    private void showError() {
+    private void showError(String message) {
         weatherText.setText(" Ошибка");
-        weatherDetails.setText("Проверьте:\n• Интернет соединение\n• API ключ\n• Город");
-        cityInfo.setText("Попробуйте другой город");
-        Toast.makeText(this, "Ошибка загрузки погоды", Toast.LENGTH_LONG).show();
+        weatherDetails.setText(message);
+        cityInfo.setText("Попробуйте обновить");
     }
 }
