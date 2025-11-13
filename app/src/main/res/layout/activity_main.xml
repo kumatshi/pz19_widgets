@@ -5,20 +5,18 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="20dp"
-    android:background="#E3F2FD"
     android:gravity="center"
+    android:background="#E3F2FD"
     tools:context=".MainActivity">
-
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text=" Яндекс Погода"
+        android:text="🌤️ Яндекс Погода"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="#1976D2"
         android:layout_marginBottom="30dp" />
-
 
     <TextView
         android:layout_width="wrap_content"
@@ -33,8 +31,17 @@
         android:layout_width="200dp"
         android:layout_height="50dp"
         android:background="@drawable/spinner_background"
-        android:layout_marginBottom="20dp" />
+        android:layout_marginBottom="10dp" />
 
+    <Button
+        android:id="@+id/change_city_button"
+        android:layout_width="180dp"
+        android:layout_height="64dp"
+        android:layout_marginBottom="20dp"
+        android:backgroundTint="#FF9800"
+        android:text="✏️ Изменить город"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/weather"
@@ -47,7 +54,6 @@
         android:gravity="center"
         android:layout_marginBottom="20dp" />
 
-
     <TextView
         android:id="@+id/weather_details"
         android:layout_width="wrap_content"
@@ -58,17 +64,15 @@
         android:gravity="center"
         android:layout_marginBottom="25dp" />
 
-
     <Button
         android:id="@+id/refresh_button"
         android:layout_width="180dp"
         android:layout_height="50dp"
-        android:text=" Обновить"
+        android:text="🔄 Обновить"
         android:textSize="16sp"
         android:backgroundTint="#4CAF50"
         android:textColor="#FFFFFF"
         android:layout_marginBottom="20dp" />
-
 
     <TextView
         android:id="@+id/city_info"

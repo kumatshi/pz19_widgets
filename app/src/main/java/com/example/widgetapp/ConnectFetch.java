@@ -66,7 +66,6 @@ public class ConnectFetch {
         BufferedReader reader = null;
 
         try {
-
             String lat = null;
             String lon = null;
             String foundCityName = null;
@@ -89,7 +88,7 @@ public class ConnectFetch {
             String urlString = String.format(YANDEX_WEATHER_API, lat, lon);
             URL url = new URL(urlString);
 
-            Log.d(LOG_TAG, "Запрос Яндекс.Погоды для: " + foundCityName);
+            Log.d(LOG_TAG, "Запрос Яндекс.Погоды для: " + foundCityName + " URL: " + urlString);
 
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
@@ -105,6 +104,20 @@ public class ConnectFetch {
 
             if (responseCode != 200) {
                 Log.e(LOG_TAG, "Ошибка HTTP от Яндекс.Погоды: " + responseCode);
+
+                try {
+                    BufferedReader errorReader = new BufferedReader(
+                            new InputStreamReader(connection.getErrorStream()));
+                    StringBuilder error = new StringBuilder();
+                    String line;
+                    while ((line = errorReader.readLine()) != null) {
+                        error.append(line);
+                    }
+                    errorReader.close();
+                    Log.e(LOG_TAG, "Ошибка ответа: " + error.toString());
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, "Не удалось прочитать ошибку");
+                }
                 return null;
             }
 
@@ -115,16 +128,16 @@ public class ConnectFetch {
                 json.append(line);
             }
 
-            Log.d(LOG_TAG, "Ответ от Яндекс.Погоды получен, длина: " + json.length());
+            Log.d(LOG_TAG, "Ответ получен: " + json.toString().substring(0, Math.min(100, json.length())) + "...");
 
             JSONObject data = new JSONObject(json.toString());
             data.put("requested_city", foundCityName);
 
-            Log.i(LOG_TAG, "Данные Яндекс.Погоды успешно получены для: " + foundCityName);
+            Log.i(LOG_TAG, "Данные успешно получены для: " + foundCityName);
             return data;
 
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Ошибка при получении данных Яндекс.Погоды для города: " + city, e);
+            Log.e(LOG_TAG, "Ошибка при получении данных для города: " + city, e);
             return null;
         } finally {
             try {
@@ -218,6 +231,33 @@ public class ConnectFetch {
                 return android.R.drawable.ic_media_pause;
             default:
                 return android.R.drawable.ic_dialog_info;
+        }
+    }
+
+    public static String getWeatherEmojiText(String condition) {
+        if (condition == null) return "❓ Неизвестно";
+
+        switch (condition) {
+            case "clear": return "☀️ Ясно";
+            case "partly-cloudy": return "🌤 Малооблачно";
+            case "cloudy": return "⛅️ Облачно";
+            case "overcast": return "☁️ Пасмурно";
+            case "drizzle": return "🌧 Морось";
+            case "light-rain": return "🌦 Дождь";
+            case "rain": return "🌧 Дождь";
+            case "moderate-rain": return "🌧💧 Дождь";
+            case "heavy-rain": return "🌧💦 Ливень";
+            case "continuous-heavy-rain": return "🌧💦💦 Ливень";
+            case "showers": return "🌦 Ливень";
+            case "wet-snow": return "🌧❄️ Снег";
+            case "light-snow": return "🌨 Снег";
+            case "snow": return "🌨 Снег";
+            case "snow-showers": return "🌨💨 Снегопад";
+            case "hail": return "🌨🌀 Град";
+            case "thunderstorm": return "⛈ Гроза";
+            case "thunderstorm-with-rain": return "⛈🌧 Гроза";
+            case "thunderstorm-with-hail": return "⛈🌨 Гроза";
+            default: return "❓ " + condition;
         }
     }
 }
