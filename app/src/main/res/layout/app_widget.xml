@@ -2,40 +2,67 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#2196F3"
-    android:padding="8dp"
-    android:orientation="vertical"
-    android:gravity="center">
+    android:background="@drawable/widget_background"
+    android:padding="12dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical">
 
-    <!-- Город -->
-    <TextView
-        android:id="@+id/city_field"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Город"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+    <ImageView
+        android:id="@+id/weather_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="Иконка погоды" />
 
-    <!-- Температура -->
-    <TextView
-        android:id="@+id/temp_field"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="00°C"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginTop="4dp" />
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-    <!-- Погода -->
-    <TextView
-        android:id="@+id/weather_field"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Погода"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        android:layout_marginTop="4dp" />
+        <TextView
+            android:id="@+id/city_field"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Оренбург"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/temp_field"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="15°C"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" • "
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp" />
+
+            <TextView
+                android:id="@+id/weather_field"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ясно"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
 
 </LinearLayout>

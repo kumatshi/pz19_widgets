@@ -66,6 +66,7 @@ public class ConnectFetch {
         BufferedReader reader = null;
 
         try {
+            // Ищем координаты города
             String lat = null;
             String lon = null;
             String foundCityName = null;
@@ -104,7 +105,7 @@ public class ConnectFetch {
 
             if (responseCode != 200) {
                 Log.e(LOG_TAG, "Ошибка HTTP от Яндекс.Погоды: " + responseCode);
-
+                // Попробуем прочитать ошибку
                 try {
                     BufferedReader errorReader = new BufferedReader(
                             new InputStreamReader(connection.getErrorStream()));
@@ -234,6 +235,7 @@ public class ConnectFetch {
         }
     }
 
+    // Метод для преобразования условия погоды в текст с эмодзи (для виджета)
     public static String getWeatherEmojiText(String condition) {
         if (condition == null) return "❓ Неизвестно";
 

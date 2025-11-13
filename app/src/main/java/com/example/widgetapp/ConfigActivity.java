@@ -5,7 +5,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.EditText;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -15,9 +17,13 @@ public class ConfigActivity extends AppCompatActivity {
     public final static String WIDGET_PREF = "widget_pref";
     public final static String WIDGET_CITY = "widget_city_";
 
+    private Spinner citySpinner;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_config);
+
 
         Intent intent = getIntent();
         Bundle extras = intent.getExtras();
@@ -26,30 +32,53 @@ public class ConfigActivity extends AppCompatActivity {
                     AppWidgetManager.INVALID_APPWIDGET_ID);
         }
 
+
         if (widgetID == AppWidgetManager.INVALID_APPWIDGET_ID) {
             finish();
         }
 
+
         resultValue = new Intent();
         resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetID);
-
         setResult(RESULT_CANCELED, resultValue);
 
-        setContentView(R.layout.activity_config);
+        setupCitySpinner();
     }
 
-    public void setCity(View view) {
-        EditText etText = findViewById(R.id.city);
+    private void setupCitySpinner() {
+        citySpinner = findViewById(R.id.city_spinner);
+        String[] cities = ConnectFetch.getSupportedCities();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                cities
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        citySpinner.setAdapter(adapter);
+    }
+
+    public void saveWidgetSettings(View view) {
+        String selectedCity = citySpinner.getSelectedItem().toString();
+
+        if (selectedCity.isEmpty()) {
+            Toast.makeText(this, "Выберите город", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
 
         SharedPreferences sp = getSharedPreferences(WIDGET_PREF, MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
-        editor.putString(WIDGET_CITY + widgetID, etText.getText().toString());
+        editor.putString(WIDGET_CITY + widgetID, selectedCity);
         editor.apply();
+
 
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
         AppWidget.updateAppWidget(this, sp, appWidgetManager, widgetID);
 
+
         setResult(RESULT_OK, resultValue);
+
+        Toast.makeText(this, "Город сохранен: " + selectedCity, Toast.LENGTH_SHORT).show();
         finish();
     }
 }
